@@ -13,8 +13,14 @@ class ChordDiagram extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const leftPad = 20.0;
+    final gridWidth = size;
+    final gridHeight = gridWidth / 1.1;
+    final nameAreaHeight = size * 0.75;
+    final totalHeight = nameAreaHeight + gridHeight;
+
     return CustomPaint(
-      size: Size(size, size * 1.5),
+      size: Size(gridWidth + leftPad, totalHeight),
       painter: _ChordDiagramPainter(
         chord: chord,
         primaryColor: Theme.of(context).colorScheme.primary,
@@ -44,118 +50,105 @@ class _ChordDiagramPainter extends CustomPainter {
     final fillPaint = Paint()..style = PaintingStyle.fill;
 
     const int numStrings = 6;
-    // 动态计算品格数：4品为主流，高把位复杂和弦用5品
-    final activeFrets = chord.frets.where((f) => f > 0).toList();
-    final fretSpan = activeFrets.isEmpty ? 4 : activeFrets.reduce((a, b) => a > b ? a : b) - chord.baseFret + 1;
-    final int numFrets = fretSpan > 4 ? 5 : 4;
-    final double stringSpacing = size.width / (numStrings + 1);
-    final double fretSpacing = (size.height - 60) / (numFrets + 1);
-    final double startX = stringSpacing;
-    final double startY = 50;
+    const int numFrets = 4;
+    const double leftPad = 20.0;
+
+    final double gridWidth = size.width - leftPad;
+    final double gridHeight = gridWidth / 1.1;
+    final double startX = leftPad;
+    final double startY = size.height - gridHeight;
+
+    final double stringSpacing = gridWidth / (numStrings - 1);
+    final double fretSpacing = gridHeight / numFrets;
 
     // 绘制弦（竖线）
     paint.color = Colors.grey.shade600;
+    paint.strokeWidth = 1.5;
     for (int i = 0; i < numStrings; i++) {
       final x = startX + i * stringSpacing;
       canvas.drawLine(
         Offset(x, startY),
-        Offset(x, startY + numFrets * fretSpacing),
+        Offset(x, startY + gridHeight),
         paint,
       );
     }
 
-    // 绘制品（横线）
+    // 绘制品（横线）— 顶部加粗为琴枕
     for (int i = 0; i <= numFrets; i++) {
       final y = startY + i * fretSpacing;
-      paint.strokeWidth = i == 0 ? 2.5 : 1;
+      paint.strokeWidth = i == 0 ? 3.0 : 1.5;
       paint.color = Colors.grey.shade600;
       canvas.drawLine(
         Offset(startX, y),
-        Offset(startX + (numStrings - 1) * stringSpacing, y),
+        Offset(startX + gridWidth, y),
         paint,
       );
     }
 
-    // 绘制品位数字
+    // 绘制品位数字（左侧留白区域）
     if (chord.baseFret > 1) {
       final textPainter = TextPainter(
         text: TextSpan(
           text: '${chord.baseFret}fr',
-          style: TextStyle(color: textColor, fontSize: 12),
+          style: TextStyle(color: textColor, fontSize: 11),
         ),
         textDirection: TextDirection.ltr,
       );
       textPainter.layout();
-      textPainter.paint(canvas, Offset(startX - textPainter.width - 4, startY - 8));
+      textPainter.paint(canvas, Offset(leftPad - textPainter.width - 4, startY - 8));
     }
 
-    // 绘制按弦点和X/O标记
+    // 绘制按弦点
     for (int i = 0; i < chord.frets.length; i++) {
-      final stringIndex = i;
       final fret = chord.frets[i];
       final finger = chord.fingers[i];
-      final x = startX + stringIndex * stringSpacing;
+      final x = startX + i * stringSpacing;
 
-      if (fret == -1 || fret == 0) {
-        // 不绘制空弦和闷音标记
-      } else {
-        final fretIndex = fret - chord.baseFret + 1;
-        final y = startY + (fretIndex - 0.5) * fretSpacing;
+      if (fret <= 0) continue;
 
-        fillPaint.color = primaryColor;
-        canvas.drawCircle(Offset(x, y), stringSpacing * 0.35, fillPaint);
+      final fretIndex = fret - chord.baseFret + 1;
+      if (fretIndex < 1 || fretIndex > numFrets) continue;
+      final y = startY + (fretIndex - 0.5) * fretSpacing;
 
-        if (finger > 0) {
-          final textPainter = TextPainter(
-            text: TextSpan(
-              text: '$finger',
-              style: const TextStyle(color: Colors.black, fontSize: 10, fontWeight: FontWeight.bold),
+      fillPaint.color = primaryColor;
+      canvas.drawCircle(Offset(x, y), stringSpacing * 0.35, fillPaint);
+
+      if (finger > 0) {
+        final textPainter = TextPainter(
+          text: TextSpan(
+            text: '$finger',
+            style: const TextStyle(
+              color: Colors.black,
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
             ),
-            textDirection: TextDirection.ltr,
-          );
-          textPainter.layout();
-          textPainter.paint(
-            canvas,
-            Offset(x - textPainter.width / 2, y - textPainter.height / 2),
-          );
-        }
+          ),
+          textDirection: TextDirection.ltr,
+        );
+        textPainter.layout();
+        textPainter.paint(
+          canvas,
+          Offset(x - textPainter.width / 2, y - textPainter.height / 2),
+        );
       }
     }
 
-    // 绘制和弦名称
+    // 绘制和弦名称（网格上方居中）
     final namePainter = TextPainter(
       text: TextSpan(
         text: chord.name,
         style: TextStyle(
           color: primaryColor,
-          fontSize: 22,
+          fontSize: 18,
           fontWeight: FontWeight.bold,
         ),
       ),
       textDirection: TextDirection.ltr,
     );
     namePainter.layout();
-    namePainter.paint(
-      canvas,
-      Offset((size.width - namePainter.width) / 2, 10),
-    );
-  }
-
-  void _drawX(Canvas canvas, double x, double y, double size, Color color) {
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = 2
-      ..style = PaintingStyle.stroke;
-    canvas.drawLine(Offset(x - size, y - size), Offset(x + size, y + size), paint);
-    canvas.drawLine(Offset(x - size, y + size), Offset(x + size, y - size), paint);
-  }
-
-  void _drawO(Canvas canvas, double x, double y, double radius, Color color) {
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = 2
-      ..style = PaintingStyle.stroke;
-    canvas.drawCircle(Offset(x, y), radius, paint);
+    final nameX = leftPad + (gridWidth - namePainter.width) / 2;
+    final nameY = startY - namePainter.height - 8;
+    namePainter.paint(canvas, Offset(nameX, nameY));
   }
 
   @override

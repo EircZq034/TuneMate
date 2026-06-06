@@ -138,6 +138,7 @@ class ChordScreen extends StatelessWidget {
           // 和弦图横向滚动
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.only(right: 16),
             child: Row(
               children: chords.asMap().entries.map((entry) {
                 final chord = entry.value;
@@ -157,8 +158,8 @@ class ChordScreen extends StatelessWidget {
                   );
                 }
                 return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: ChordDiagram(chord: chord, size: 80),
+                  padding: const EdgeInsets.only(right: 12),
+                  child: ChordDiagram(chord: chord, size: 58),
                 );
               }).toList(),
             ),
