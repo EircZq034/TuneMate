@@ -76,12 +76,15 @@ class TuningProvider extends ChangeNotifier {
   }
 
   Future<void> addCustomTuning(TuningScheme tuning) async {
+    assert(!tuning.isBuiltIn, '禁止通过此方法添加内置特调');
     await _db.saveCustomTuning(tuning);
     _tunings.add(tuning);
     notifyListeners();
   }
 
   Future<void> deleteCustomTuning(String id) async {
+    final tuning = _tunings.firstWhere((t) => t.id == id);
+    assert(!tuning.isBuiltIn, '禁止删除内置特调');
     await _db.deleteCustomTuning(id);
     _tunings.removeWhere((t) => t.id == id);
     if (_selectedTuning?.id == id) {

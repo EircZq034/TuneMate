@@ -141,6 +141,38 @@ class _TuningFormScreenState extends State<TuningFormScreen>
       return;
     }
 
+    // 重复检测
+    final provider = context.read<TuningProvider>();
+    final newName = _nameEnController.text.trim();
+
+    // 1. 名称重复
+    final nameDuplicate = provider.tunings.where(
+      (t) => t.nameEn.toLowerCase() == newName.toLowerCase(),
+    );
+    if (nameDuplicate.isNotEmpty) {
+      _showError(
+        '方案名称 "$newName" 已存在，请使用其他名称。',
+      );
+      return;
+    }
+
+    // 2. 音名配置重复（和已有特调的实际音名一致）
+    const allNotes = AppConstants.allNotes;
+    const standard = AppConstants.standardTuning;
+    for (final tuning in provider.tunings) {
+      final existingNotes = tuning.strings.map((s) {
+        final refNote = standard[s.referenceString - 1];
+        final refIdx = allNotes.indexOf(refNote);
+        return allNotes[(refIdx + s.capoFret) % 12];
+      }).toList();
+      if (_listEquals(existingNotes, targetNotes)) {
+        _showError(
+          '当前方案与 "${tuning.getName(Localizations.localeOf(context).languageCode)}" 的音名配置完全一致，添加失败。',
+        );
+        return;
+      }
+    }
+
     // 开始保存动画
     setState(() => _isSaving = true);
     _animController.repeat();
@@ -202,6 +234,14 @@ class _TuningFormScreenState extends State<TuningFormScreen>
       }
     }
     return parts.join('  ');
+  }
+
+  bool _listEquals(List<String> a, List<String> b) {
+    if (a.length != b.length) return false;
+    for (int i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
   }
 
   void _showError(String message) {
