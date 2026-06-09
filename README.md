@@ -46,7 +46,7 @@
 
 ### 📱 Android 手机
 
-直接从 [Releases](../../releases) 页面下载最新 `app-release.apk`，传到手机安装即可。
+直接从 [Releases](../../releases) 页面下载最新 `TuneMate-android.apk`，传到手机安装即可。
 
 > 安装时需要允许"安装未知来源应用"。如果系统提示安全风险，选择"继续安装"或"信任此来源"。
 
@@ -56,7 +56,7 @@
 
 #### 方式一：下载预构建程序（推荐）
 
-从 [Releases](../../releases) 页面下载最新的 `tunemate-windows.zip`，解压后双击 `tunemate.exe` 即可运行，无需安装任何开发环境。
+从 [Releases](../../releases) 页面下载最新的 `TuneMate-windows.zip`，解压后双击 `TuneMate.exe` 即可运行，无需安装任何开发环境。
 
 > 系统要求：Windows 10 及以上，64 位
 
@@ -71,11 +71,11 @@
 ```bash
 # Windows 桌面
 flutter build windows --release
-# 输出: build/windows/x64/runner/Release/tunemate.exe
+# 输出: build/windows/x64/runner/Release/TuneMate.exe
 
 # Android APK
 flutter build apk --release
-# 输出: build/app/outputs/flutter-apk/app-release.apk
+# 输出: build/app/outputs/flutter-apk/app-release.apk（可重命名为 TuneMate-android.apk）
 ```
 
 ## 项目结构
