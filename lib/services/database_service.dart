@@ -1,6 +1,9 @@
 import 'dart:convert';
+import 'dart:io' show Platform;
 import 'package:sqflite/sqflite.dart';
-import 'package:path/path.dart' as path;
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 import '../models/tuning_scheme.dart';
 import '../models/string_tuning.dart';
 
@@ -16,11 +19,24 @@ class DatabaseService {
   }
 
   Future<void> init() async {
-    final dbPath = await getDatabasesPath();
-    _database = await openDatabase(
-      path.join(dbPath, 'tunemate.db'),
-      version: 1,
-      onCreate: _createDB,
+    if (_database != null) return;
+
+    String dbPath;
+    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+      sqfliteFfiInit();
+      databaseFactory = databaseFactoryFfi;
+      final appDir = await getApplicationDocumentsDirectory();
+      dbPath = p.join(appDir.path, 'tunemate.db');
+    } else {
+      dbPath = p.join(await getDatabasesPath(), 'tunemate.db');
+    }
+
+    _database = await databaseFactory.openDatabase(
+      dbPath,
+      options: OpenDatabaseOptions(
+        version: 1,
+        onCreate: _createDB,
+      ),
     );
   }
 
